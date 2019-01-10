@@ -12,6 +12,7 @@ module Pytty
         end
 
         subcommand ["version"], "Show version information", Pytty::Common::Cli::VersionCommand
+        subcommand ["run"], "run", RunCommand
 
         def self.run
           super
