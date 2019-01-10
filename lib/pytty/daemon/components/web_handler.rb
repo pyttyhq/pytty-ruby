@@ -11,12 +11,21 @@ module Pytty
 
         def handle
           req = Rack::Request.new(@env)
-          case req.path_info
+          body = begin
+            JSON.parse(req.body.read)
+          rescue
+          end
+
+          obj = case req.path_info
           when "/run"
-            Run.new.run
+            Run.new cmd: body.dig("cmd")
+          when "/stream"
+            Stream.new cmd: body.dig("cmd")
           else
             raise "Unknown: #{req.path_info}"
           end
+
+          obj.run
         end
       end
     end

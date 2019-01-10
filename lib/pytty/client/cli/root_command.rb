@@ -13,6 +13,7 @@ module Pytty
 
         subcommand ["version"], "Show version information", Pytty::Common::Cli::VersionCommand
         subcommand ["run"], "run", RunCommand
+        subcommand ["stream"], "stream", StreamCommand
 
         def self.run
           super

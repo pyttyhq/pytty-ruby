@@ -4,8 +4,13 @@ module Pytty
   module Daemon
     module Components
       class Run
+        def initialize(cmd:)
+          @cmd = cmd
+        end
+
         def run
-          `say hello`
+          cmd_string = @cmd.join(" ")
+          `#{cmd_string}`
         end
       end
     end

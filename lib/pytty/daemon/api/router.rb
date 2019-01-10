@@ -1,4 +1,6 @@
 require_relative "web_sockets"
+require_relative "chunk"
+
 require_relative "../components"
 
 module Pytty
@@ -8,11 +10,18 @@ module Pytty
         def call(env)
           req = Rack::Request.new(env)
           resp = case req.path_info
+          when "/stream"
+            if env["HTTP_UPGRADE"] == "websocket"
+              handler = Pytty::Daemon::Components::WebSocketHandler.new(env)
+              handler.handle
+            end
+
+            [404, {"Content-Type" => "text/html"}, ["websocket only"]]
           when "/run"
             handler = Pytty::Daemon::Components::WebHandler.new(env)
-            handler.handle
+            output = handler.handle
 
-            [200, {"Content-Type" => "text/html"}, ["ok"]]
+            [200, {"Content-Type" => "text/html"}, [output]]
           when "/ws"
             if env["HTTP_UPGRADE"] == "websocket"
               ws = WebSockets.new env

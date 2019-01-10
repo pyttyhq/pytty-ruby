@@ -1,5 +1,6 @@
 require "falcon"
 require_relative "router"
+require_relative "chunk"
 
 module Pytty
   module Daemon
@@ -10,7 +11,11 @@ module Pytty
 
         def run
           rack_app = Rack::Builder.new do
-            use Rack::CommonLogger
+            #use Rack::CommonLogger
+
+            map "/chunk" do
+              run Chunk.new
+            end
             map "/v1" do
               run Router.new
             end
