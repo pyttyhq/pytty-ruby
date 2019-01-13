@@ -11,6 +11,37 @@ module Pytty
       class StreamCommand < Clamp::Command
         parameter "CMD ...", "command"
         def execute
+
+          $stdin.raw!
+          $stdin.echo = false
+          Async::Reactor.run do |task|
+            async_stdin = Async::IO::Stream.new(
+              Async::IO::Generic.new($stdin)
+            )
+
+            while c = async_stdin.read(1) do
+              case c
+              when "\x01"
+                print "\r"
+              when "\x03"
+                puts "\r\n\nctrl+c\n\r"
+                break
+              when "\r"
+                print "\n\r"
+              when "\e"
+                print c
+                print async_stdin.read(2)
+              else
+                print c.inspect
+#                print c
+#                p c
+              end
+            end
+          end
+
+          exit 0
+
+          #---------------
           env = {
             "LINES" => IO.console.winsize.first.to_s,
             "COLUMNS" => IO.console.winsize.last.to_s

@@ -9,6 +9,7 @@ $LOAD_PATH.unshift lib_path unless $LOAD_PATH.include?(lib_path)
 STDOUT.sync = true
 
 require 'pytty'
+require 'pytty/client'
 require 'pytty/client/cli'
 
 Pytty::Client::Cli::RootCommand.run

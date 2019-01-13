@@ -22,13 +22,20 @@ module Pytty
           stderr_writer.close
 
           stdout = Async::IO::Generic.new process_stdout
-          stdin = Async::IO::Generic.new process_stdin
+#          stdin = Async::IO::Generic.new process_stdin
           Async::Task.current.async do |task|
             while c = stdout.read(1)
               stream.write c
             end
             stream.close
           end
+          # Async::Task.current.async do |task|
+          #   loop do
+          #     p "o"
+          #     task.sleep 1
+          #   end
+          # end
+
         end
       end
     end

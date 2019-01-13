@@ -23,3 +23,9 @@ guard :bundler do
   # Assume files are symlinked from somewhere
   files.each { |file| watch(helper.real_path(file)) }
 end
+
+# This is an example with all options that you can specify for guard-process
+guard 'process', name: 'pyttyd', command: 'bundle exec exe/pyttyd serve', env: {}, stop_signal: "TERM"  do
+  watch /.+/
+end
+

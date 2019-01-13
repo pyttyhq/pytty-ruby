@@ -1,10 +1,11 @@
 # frozen_string_literal: true
 require "rack/request"
+require "mustermann"
 
 module Pytty
   module Daemon
     module Components
-      class WebHandler
+      class HttpHandler
         def initialize(env)
           @env = env
         end
@@ -14,6 +15,25 @@ module Pytty
           body = begin
             JSON.parse(req.body.read)
           rescue
+          end
+
+          params = Mustermann.new('/:component(/?:id)?').params(req.path_info)
+          case params.fetch("component")
+          when "rm"
+            id = params["id"]
+
+            process_yield = Pytty::Daemon.yields[id]
+            unless process_yield
+              return [404, nil]
+            else
+              return [200, process_yield]
+            end
+          end
+
+          case req.path_info
+          when "/kill"
+            p req
+            return [200, {}]
           end
 
           obj = case req.path_info

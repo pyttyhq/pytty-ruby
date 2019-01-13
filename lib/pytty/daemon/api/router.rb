@@ -1,7 +1,5 @@
-require_relative "web_sockets"
-require_relative "chunk"
-
-require_relative "../components"
+require "mustermann"
+require "json"
 
 module Pytty
   module Daemon
@@ -9,20 +7,46 @@ module Pytty
       class Router
         def call(env)
           req = Rack::Request.new(env)
-          resp = case req.path_info
-          when "/stream"
+
+          params = Mustermann.new('/:component(/?:id)?').params(req.path_info)
+          body = begin
+            JSON.parse(req.body.read)
+          rescue
+          end
+
+          resp = case params["component"]
+          when "stdin"
+            c = body["c"]
+            Pytty::Daemon.yields[params["id"]].stdin.enqueue c
+            [200, {"Content-Type" => "text/html"}, ["ok"]]
+          when "stream"
             if env["HTTP_UPGRADE"] == "websocket"
               handler = Pytty::Daemon::Components::WebSocketHandler.new(env)
               handler.handle
             end
 
             [404, {"Content-Type" => "text/html"}, ["websocket only"]]
-          when "/run"
-            handler = Pytty::Daemon::Components::WebHandler.new(env)
-            output = handler.handle
+          when "attach"
+            task = Async::Task.current
+            body = Async::HTTP::Body::Writable.new
 
-            [200, {"Content-Type" => "text/html"}, [output]]
-          when "/ws"
+            task.async do |task|
+              Pytty::Daemon.yields[params["id"]].stdouts << body
+              loop do
+                task.sleep 0.1
+              end
+            rescue Exception => ex
+              p ex
+            ensure
+              puts "closing body"
+              body.close
+            end
+
+            [200, {'content-type' => 'text/html; charset=utf-8'}, body]
+          when "run","yield","ps","rm","kill","spawn","signal"
+            status, output = Pytty::Daemon::Components::Handler.handle component: params["component"], id: params["id"], params: body
+            [status, {"Content-Type" => "application/json"}, [output.to_json]]
+          when "ws"
             if env["HTTP_UPGRADE"] == "websocket"
               ws = WebSockets.new env
               ws.handle

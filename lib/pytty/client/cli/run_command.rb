@@ -9,18 +9,21 @@ module Pytty
     module Cli
       class RunCommand < Clamp::Command
         parameter "CMD ...", "command"
+        option ["-i","--interactive"], :flag, "interactive"
+        option ["-t","--tty"], :flag, "tty"
+        option ["-d","--detach"], :flag, "detach"
+
         def execute
           Async.run do
-            internet = Async::HTTP::Internet.new
-            headers = [['accept', 'application/json']]
-            body = {
-              cmd: cmd_list
-            }.to_json
+            json = Pytty::Client::Api::Yield.run cmd: cmd_list, env: {}
+            process_yield = Pytty::Client::ProcessYield.from_json json
+            process_yield.spawn tty: tty?, interactive: interactive?
 
-            response = internet.post("http://localhost:1234/v1/run", headers, [body])
-            puts response.read
-          ensure
-            internet.close
+            if detach?
+              puts process_yield.id
+            else
+              process_yield.attach
+            end
           end
         end
       end
