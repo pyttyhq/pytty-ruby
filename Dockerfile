@@ -1,4 +1,4 @@
-FROM ruby:2.6.0 as build
+FROM ruby:2.6.0
 
 RUN apt-get update && apt-get install -y squashfs-tools build-essential
 
@@ -10,11 +10,12 @@ RUN chmod +x rubyc
 RUN apt-get update && apt-get install -y bison
 WORKDIR /build
 COPY . .
-RUN bin/build binary
+ENTRYPOINT [ "/bin/bash" ]
+#RUN bin/build binary
 
-FROM ubuntu:18.04
+# FROM ubuntu:18.04
 
-COPY --from=builder /build/puttyd /usr/local/bin
-ENV PYTTY_BIND=0.0.0.0
-ENV PYTTY_PORT=1234
-ENTRYPOINT [ "/usr/local/bin/puttyd", "serve"]
+# COPY --from=builder /build/puttyd /usr/local/bin
+# ENV PYTTY_BIND=0.0.0.0
+# ENV PYTTY_PORT=1234
+# ENTRYPOINT [ "/usr/local/bin/puttyd", "serve"]
