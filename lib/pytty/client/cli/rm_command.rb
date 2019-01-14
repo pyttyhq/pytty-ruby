@@ -29,8 +29,13 @@ module Pytty
             body = {}.to_json
 
             for id in ids do
-              response = internet.post("http://localhost:1234/v1/rm/#{id}", headers, [body])
-              puts id
+              response = internet.post("#{Pytty::Client.host_url}/v1/rm/#{id}", headers, [body])
+              if response.status == 200
+                puts id
+              else
+                puts response.read
+                exit 1
+              end
             end
           ensure
             internet.close

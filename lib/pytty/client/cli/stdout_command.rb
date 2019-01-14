@@ -7,13 +7,12 @@ require 'json'
 module Pytty
   module Client
     module Cli
-      class AttachCommand < Clamp::Command
+      class StdoutCommand < Clamp::Command
         parameter "ID", "id"
-        option ["-i","--interactive"], :flag, "interactive"
 
         def execute
           Async.run do
-            Pytty::Client::Api::Attach.run id: id, interactive: interactive?
+            Pytty::Client::Api::Stdout.run id: id
           end
         end
       end

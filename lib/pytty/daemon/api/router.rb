@@ -15,25 +15,16 @@ module Pytty
           end
 
           resp = case params["component"]
-          when "stdin"
-            c = body["c"]
-            Pytty::Daemon.yields[params["id"]].stdin.enqueue c
-            [200, {"Content-Type" => "text/html"}, ["ok"]]
-          when "stream"
-            if env["HTTP_UPGRADE"] == "websocket"
-              handler = Pytty::Daemon::Components::WebSocketHandler.new(env)
-              handler.handle
-            end
+          when "stdout"
+            process_yield = Pytty::Daemon.yields[params["id"]]
+            return [404, {'content-type' => 'text/html; charset=utf-8'}, ["does not exist"]] unless process_yield
 
-            [404, {"Content-Type" => "text/html"}, ["websocket only"]]
-          when "attach"
-            task = Async::Task.current
             body = Async::HTTP::Body::Writable.new
 
-            task.async do |task|
-              Pytty::Daemon.yields[params["id"]].stdouts << body
-              loop do
-                task.sleep 0.1
+            begin
+              our_stdout = process_yield.stdout.dup
+              while c = our_stdout.read
+                body.write c
               end
             rescue Exception => ex
               p ex
@@ -43,8 +34,28 @@ module Pytty
             end
 
             [200, {'content-type' => 'text/html; charset=utf-8'}, body]
-          when "run","yield","ps","rm","kill","spawn","signal"
-            status, output = Pytty::Daemon::Components::Handler.handle component: params["component"], id: params["id"], params: body
+          when "attach"
+            process_yield = Pytty::Daemon.yields[params["id"]]
+            body = Async::HTTP::Body::Writable.new
+
+            Async::Task.current.async do |task|
+              notification = process_yield.add_stdout body
+              p ["blocking", notification]
+              notification.wait
+              p "got notification"
+            rescue Exception => ex
+              p ex
+            ensure
+              puts "closing body"
+              body.close
+            end
+
+            [200, {'content-type' => 'text/html; charset=utf-8'}, body]
+          when "ps","yield"
+            status, output = Pytty::Daemon::Components::Handler.handle component: params["component"], params: body
+            [status, {"Content-Type" => "application/json"}, [output.to_json]]
+          when "spawn","rm","signal","stdin"
+            status, output = Pytty::Daemon::Components::YieldHandler.handle component: params["component"], id: params["id"], params: body
             [status, {"Content-Type" => "application/json"}, [output.to_json]]
           when "ws"
             if env["HTTP_UPGRADE"] == "websocket"

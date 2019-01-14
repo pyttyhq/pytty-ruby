@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 require "securerandom"
+require "pty"
 
 module Pytty
   module Daemon
@@ -9,14 +10,22 @@ module Pytty
         @env = env
 
         @pid = nil
+        @status = nil
         @id = id || SecureRandom.uuid
 
-        @stdouts = []
+        @stdout = nil
+        @stdouts = {}
         @stdin = Async::Queue.new
       end
 
-      attr_reader :id, :cmd, :pid
-      attr_accessor :stdouts, :stdin
+      attr_reader :id, :cmd, :pid, :status, :stdout
+      attr_accessor :stdin
+
+      def add_stdout(stdout)
+        notification = Async::Notification.new
+        @stdouts[notification] = stdout
+        notification
+      end
 
       def running?
         !@pid.nil?
@@ -26,6 +35,7 @@ module Pytty
         {
           id: @id,
           pid: @pid,
+          status: @status,
           cmd: @cmd,
           env: @env,
           running: running?
@@ -33,11 +43,21 @@ module Pytty
       end
 
       def spawn
-        executable, args = @cmd
-        @env.merge!({
-          "TERM" => "vt100"
-        })
+        return false if running?
 
+        executable, args = @cmd
+        # @env.merge!({
+        #   "TERM" => "xterm"
+        # })
+
+        stdout_path = File.join(Pytty::Daemon.pytty_path, @id)
+        File.unlink stdout_path if File.exist? stdout_path
+        stdout_appender = Async::IO::Stream.new(
+          File.open stdout_path, "a"
+        )
+        @stdout = Async::IO::Stream.new(
+          File.open stdout_path, "r"
+        )
         Async::Task.current.async do |task|
           p ["spawn", executable, args, @env]
 
@@ -50,43 +70,48 @@ module Pytty
             while c = @stdin.dequeue do
               async_stdin.write c
             end
+          rescue Exception => ex
+            puts "async_stdin.write: #{ex.inspect}"
           end
 
           task_stdout_writer = task.async do |subtask|
             while c = async_stdout.read(1)
-              @stdouts.each do |s|
+              stdout_appender.write c
+              stdout_appender.flush
+              @stdouts.each do |notification, stdout|
                 begin
-                  s.write c
+                  stdout.write c
                 rescue Errno::EPIPE => ex
-                  puts "cannnot write, popping"
-                  @stdouts.pop
+                  notification.signal
+                  @stdouts.delete notification
                 end
               end
             end
+          ensure
+            task_stdin_writer.stop
+            Process.wait(@pid)
+            @status = $?.exitstatus
+            @pid = nil
+            stdout_appender.close
+
+            @stdouts.each do |notification, stdout|
+              p ["notifying: #{notification}"]
+              notification.signal
+              @stdouts.delete notification
+            end
+            p ["exited", @cmd, "status", @status]
           end
         end.wait
 
         puts "spawned"
+        p ["@stdouts", @stdouts]
+        return true
       end
 
       def signal(sig)
-        Process.kill(sig, @pid)
-      end
-
-      def tstp
-        Process.kill("TSTP", @pid)
-      end
-
-      def cont
-        Process.kill("CONT", @pid)
-      end
-
-      def kill
-        Process.kill("KILL", @pid)
-      end
-
-      def term
-        Process.kill("TERM", @pid)
+        sig_upcased = sig.upcase
+        p ["signaling", sig_upcased, "to", @pid]
+        Process.kill(sig_upcased, @pid)
       end
     end
   end

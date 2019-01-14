@@ -13,17 +13,14 @@ module Pytty
 
         def execute
           Async.run do
-            internet = Async::HTTP::Internet.new
-            headers = [['accept', 'application/json']]
-            body = {}.to_json
-
             for id in id_list do
-              #TODO /v1/process/:id/signal ?
-              response = internet.post("http://localhost:1234/v1/signal/#{signal}/#{id}", headers, [body])
-              p response.read
+              response, body = Pytty::Client::Api::Signal.run id: id, signal: signal
+              if response.status == 200
+                puts id
+              else
+                puts body
+              end
             end
-          ensure
-            internet.close
           end
         end
       end

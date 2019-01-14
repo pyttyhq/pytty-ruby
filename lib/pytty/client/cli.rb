@@ -10,5 +10,6 @@ require_relative "cli/rm_command"
 require_relative "cli/spawn_command"
 require_relative "cli/signal_command"
 require_relative "cli/attach_command"
+require_relative "cli/stdout_command"
 
 require_relative "cli/root_command"

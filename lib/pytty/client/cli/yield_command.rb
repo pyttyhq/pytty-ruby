@@ -9,19 +9,15 @@ module Pytty
     module Cli
       class YieldCommand < Clamp::Command
         parameter "CMD ...", "command"
-        option ["-q", "--quiet"], :flag, "quiet"
+        option ["--name"], "NAME", "name"
 
         def execute
           process_yield = Async.run do
-            json = Pytty::Client::Api::Yield.run cmd: cmd_list, env: {}
+            json = Pytty::Client::Api::Yield.run cmd: cmd_list, id: name, env: {}
             ::Pytty::Client::ProcessYield.from_json json
           end.wait
 
-          if quiet?
-            puts process_yield.id
-          else
-            puts process_yield
-          end
+          puts process_yield.id
         end
       end
     end

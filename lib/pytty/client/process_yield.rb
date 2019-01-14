@@ -18,17 +18,23 @@ module Pytty
           pid: json.fetch("pid")
         })
       end
-
+      def running?
+        !@pid.nil?
+      end
       def to_s
-        "#{@id} #{@cmd}"
+        fields = []
+        fields << @id
+        fields << running?
+        fields << @cmd.join(" ")
+        fields.join("\t")
       end
 
       def spawn(tty:, interactive:)
         Pytty::Client::Api::Spawn.run id: @id, tty: tty, interactive: interactive
       end
 
-      def attach
-        Pytty::Client::Api::Attach.run id: @id
+      def attach(interactive:)
+        Pytty::Client::Api::Attach.run id: @id, interactive: interactive
       end
     end
   end

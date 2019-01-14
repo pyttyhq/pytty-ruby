@@ -12,17 +12,22 @@ module Pytty
         option ["-i","--interactive"], :flag, "interactive"
         option ["-t","--tty"], :flag, "tty"
         option ["-d","--detach"], :flag, "detach"
+        option ["--name"], "name", "name"
 
         def execute
-          Async.run do
-            json = Pytty::Client::Api::Yield.run cmd: cmd_list, env: {}
+          Async.run do |task|
+            json = Pytty::Client::Api::Yield.run id: name, cmd: cmd_list, env: {}
             process_yield = Pytty::Client::ProcessYield.from_json json
+            unless detach?
+              task.async do
+                process_yield.attach interactive: interactive?
+              end
+            end
+
             process_yield.spawn tty: tty?, interactive: interactive?
 
             if detach?
               puts process_yield.id
-            else
-              process_yield.attach
             end
           end
         end

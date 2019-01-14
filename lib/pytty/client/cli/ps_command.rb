@@ -11,17 +11,18 @@ module Pytty
         option ["-q","--quiet"], :flag, "quiet"
 
         def execute
-          process_yields = Async.run do
+          process_yield_jsons = Async.run do
             Pytty::Client::Api::Ps.run
           end.wait
 
           unless quiet?
-            puts "id  cmd"
+            puts "id\trunning\tcmd"
             puts "-"*40
           end
-          for process_yield in process_yields do
+          for process_yield_json in process_yield_jsons do
+            process_yield = Pytty::Client::ProcessYield.from_json process_yield_json
             if quiet?
-              puts process_yield.fetch "id"
+              puts process_yield.id
             else
               puts process_yield
             end

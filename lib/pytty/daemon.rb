@@ -28,8 +28,12 @@ module Pytty
 
     end
 
+    def self.pytty_path
+      File.join Dir.home, ".pytty"
+    end
+
     def self.yields_json
-      File.join(Dir.home,".pytty","yields.json")
+      File.join(pytty_path,"yields.json")
     end
   end
 end

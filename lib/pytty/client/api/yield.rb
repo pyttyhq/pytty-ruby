@@ -2,7 +2,7 @@ module Pytty
   module Client
     module Api
       class Yield
-        def self.run(cmd:, env:)
+        def self.run(cmd:, id:, env:)
           internet = Async::HTTP::Internet.new
           headers = [['accept', 'application/json']]
 
@@ -12,11 +12,12 @@ module Pytty
           }.merge env
 
           body = {
+            id: id,
             cmd: cmd,
             env: term_env
           }.to_json
 
-          response = internet.post("http://localhost:1234/v1/yield", headers, [body])
+          response = internet.post("#{Pytty::Client.host_url}/v1/yield", headers, [body])
           JSON.parse(response.body.read)
         end
       end

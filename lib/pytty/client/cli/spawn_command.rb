@@ -13,7 +13,13 @@ module Pytty
         def execute
           Async.run do
             for id in id_list
-              Pytty::Client::Api::Spawn.run id: id
+              response, body = Pytty::Client::Api::Spawn.run id: id, tty:true, interactive:true
+              unless response.status == 200
+                puts body
+                exit 1
+              else
+                puts id
+              end
             end
           end
         end

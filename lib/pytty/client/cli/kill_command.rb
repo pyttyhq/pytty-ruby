@@ -14,10 +14,12 @@ module Pytty
           Async.run do
             internet = Async::HTTP::Internet.new
             headers = [['accept', 'application/json']]
-            body = {}.to_json
+            body = {
+              signal: "KILL"
+            }.to_json
 
             for id in id_list do
-              response = internet.post("http://localhost:1234/v1/kill/#{id}", headers, [body])
+              response = internet.post("#{Pytty::Client.host_url}/v1/signal/#{id}", headers, [body])
               puts response.read
             end
           ensure

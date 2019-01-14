@@ -1,16 +1,15 @@
 module Pytty
   module Client
     module Api
-      class Spawn
-        def self.run(id:, tty:, interactive:)
+      class Signal
+        def self.run(id:, signal:)
           internet = Async::HTTP::Internet.new
           headers = [['accept', 'application/json']]
           body = {
-            tty: tty,
-            interactive: interactive
+            signal: signal
           }.to_json
 
-          response = internet.post("#{Pytty::Client.host_url}/v1/spawn/#{id}", headers, [body])
+          response = internet.post("#{Pytty::Client.host_url}/v1/signal/#{id}", headers, [body])
           [response, JSON.parse(response.read)]
         ensure
           internet.close

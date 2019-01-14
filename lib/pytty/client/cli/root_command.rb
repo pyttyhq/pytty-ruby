@@ -21,6 +21,7 @@ module Pytty
         subcommand ["spawn"], "spawn", SpawnCommand
         subcommand ["signal"], "signal", SignalCommand
         subcommand ["attach"], "attach", AttachCommand
+        subcommand ["stdout"], "stdout", StdoutCommand
 
         def self.run
           super

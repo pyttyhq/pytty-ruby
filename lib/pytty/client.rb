@@ -2,6 +2,13 @@
 
 module Pytty
   module Client
+    def self.host_url
+      if ENV["PYTTY_HOST"]
+        ENV["PYTTY_HOST"]
+      else
+        "http://localhost:1234"
+      end
+    end
   end
 end
 

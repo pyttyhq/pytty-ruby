@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    pytty (0.3.0)
+    pytty (0.4.0)
       async-websocket
       clamp (~> 1.3)
       falcon
@@ -10,7 +10,7 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
-    async (1.12.0)
+    async (1.13.0)
       nio4r (~> 2.3)
       timers (~> 4.1)
     async-container (0.8.1)
@@ -62,7 +62,6 @@ GEM
     http-hpack (0.1.1)
     http-protocol (0.10.1)
       http-hpack (~> 0.1.0)
-    kommando (0.1.2)
     listen (3.1.5)
       rb-fsevent (~> 0.9, >= 0.9.4)
       rb-inotify (~> 0.9, >= 0.9.7)
@@ -121,7 +120,6 @@ DEPENDENCIES
   guard-bundler
   guard-process
   guard-rspec
-  kommando
   pytty!
   rake (~> 10.0)
   rspec (~> 3.0)
