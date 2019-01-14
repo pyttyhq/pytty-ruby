@@ -1,7 +1,11 @@
 ---
-sudo: false
 language: ruby
-cache: bundler
 rvm:
   - 2.6.0
+cache: bundler
+services:
+  - docker
 before_install: gem install bundler -v 1.16.6
+script:
+ - rake
+ - bin/build binary

@@ -46,28 +46,29 @@ module Pytty
           async_stdout = Async::IO::Generic.new real_stdout
           async_stdin = Async::IO::Generic.new real_stdin
 
-          task.async do |subtask|
+          task_stdin_writer = task.async do |subtask|
             while c = @stdin.dequeue do
-              p c
               async_stdin.write c
             end
           end
 
-          while c = async_stdout.read(1)
-            @stdouts.each do |s|
-              begin
-                s.write c
-              rescue Errno::EPIPE => ex
-                puts "cannnot write, popping"
-                @stdouts.pop
+          task_stdout_writer = task.async do |subtask|
+            while c = async_stdout.read(1)
+              @stdouts.each do |s|
+                begin
+                  s.write c
+                rescue Errno::EPIPE => ex
+                  puts "cannnot write, popping"
+                  @stdouts.pop
+                end
               end
             end
           end
-          puts "CLOSED"
-          #stdout.close
-        end
+        end.wait
 
+        puts "spawned"
       end
+
       def signal(sig)
         Process.kill(sig, @pid)
       end

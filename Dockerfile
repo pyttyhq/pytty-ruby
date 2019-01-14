@@ -1,21 +1,18 @@
-FROM ruby:2.6.0
+FROM ruby:2.5.1 AS builder
 
-RUN apt-get update && apt-get install -y squashfs-tools build-essential
+RUN apt-get update && apt-get install -y squashfs-tools build-essential bison
 
-WORKDIR /usr/local/bin
-RUN curl -L https://github.com/kontena/ruby-packer/releases/download/0.5.0%2Bextra6/rubyc-0.5.0+extra6-linux-amd64.gz | gunzip > rubyc
-#RUN curl -L https://github.com/kontena/ruby-packer/releases/download/2.6.0-0.6.0.rc1/rubyc-2.6.0-0.6.0.rc1-linux-amd64.gz | gunzip > rubyc
-RUN chmod +x rubyc
-
-RUN apt-get update && apt-get install -y bison
 WORKDIR /build
+COPY build/linux-debian-deps.sh build/
+RUN build/linux-debian-deps.sh
+
 COPY . .
-ENTRYPOINT [ "/bin/bash" ]
-#RUN bin/build binary
+RUN build/linux.sh
 
-# FROM ubuntu:18.04
+FROM ubuntu:18.04
 
-# COPY --from=builder /build/puttyd /usr/local/bin
-# ENV PYTTY_BIND=0.0.0.0
-# ENV PYTTY_PORT=1234
-# ENTRYPOINT [ "/usr/local/bin/puttyd", "serve"]
+COPY --from=builder /build/tmp/pyttyd-linux-amd64-${version} /usr/local/bin/pyttyd
+
+ENV PYTTY_BIND=0.0.0.0
+ENV PYTTY_PORT=1234
+ENTRYPOINT [ "/usr/local/bin/pyttyd" ]

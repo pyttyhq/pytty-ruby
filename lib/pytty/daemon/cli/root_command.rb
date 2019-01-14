@@ -15,7 +15,11 @@ module Pytty
         subcommand ["serve"], "serve", ServeCommand
 
         def self.run
-          super
+          if ARGV.size == 0
+            ServeCommand.run
+          else
+            super
+          end
         rescue StandardError => exc
           warn exc.message
           warn exc.backtrace.join("\n")

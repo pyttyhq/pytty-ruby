@@ -1,2 +1,6 @@
+.dockerignore
 Dockerfile
+Dockerfile.*
 docker-compose.yml
+pkg/*
+tmp/*

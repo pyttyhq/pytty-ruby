@@ -5,23 +5,24 @@ module Pytty
   module Daemon
     module Cli
       class ServeCommand < Clamp::Command
-        option ["--url"], "URL", "url"
-
         def execute
           puts "🚽 pyttyd #{Pytty::VERSION}"
 
           url_parts = ["http://"]
-          url_parts << if bind = ENV.get("PYTTY_BIND")
-            bind
+          url_parts << if ENV["PYTTY_BIND"]
+            ENV["PYTTY_BIND"]
           else
             "127.0.0.1"
           end
-          url_parts << if port = ENV.get("PYTTY_PORT")
-            if port == "PORT"
+          url_parts << ":"
+          url_parts << if ENV["PYTTY_PORT"]
+            if ENV["PYTTY_PORT"] == "PORT"
               ENV.fetch "PORT"
             else
-              "1234"
+              ENV["PYTTY_PORT"]
             end
+          else
+            "1234"
           end
 
           Async::Reactor.run do

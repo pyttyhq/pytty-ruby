@@ -1,7 +1,11 @@
-version: '2.1'
+version: '3'
 
 services:
-  app:
+  ubuntu:
     build: .
-    image: nopush-app
-  
+    image: pyttyhq/ubuntu:18.04
+    volumes:
+      - build:/tmp/pytty-build
+
+volumes:
+  build:
