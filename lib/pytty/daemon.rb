@@ -21,11 +21,8 @@ module Pytty
       objs.each do |k,obj|
         process_yield = ProcessYield.new obj["cmd"], id: obj["id"], env: obj["env"]
         @@yields[obj["id"]] = process_yield
-        print "spawning #{process_yield.cmd} ... "
         process_yield.spawn if obj["running"]
-        puts "done"
       end
-
     end
 
     def self.pytty_path

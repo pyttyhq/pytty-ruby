@@ -29,24 +29,25 @@ module Pytty
             rescue Exception => ex
               p ex
             ensure
-              puts "closing body"
               body.close
             end
 
             [200, {'content-type' => 'text/html; charset=utf-8'}, body]
           when "attach"
             process_yield = Pytty::Daemon.yields[params["id"]]
+            return [404, {'content-type' => 'text/html; charset=utf-8'}, ["does not exist"]] unless process_yield
+
+            puts "got attach: #{req.object_id}"
             body = Async::HTTP::Body::Writable.new
 
             Async::Task.current.async do |task|
               notification = process_yield.add_stdout body
-              p ["blocking", notification]
               notification.wait
-              p "got notification"
             rescue Exception => ex
-              p ex
+              puts "----"
+              p ["attach", ex]
             ensure
-              puts "closing body"
+              puts "closing attach: #{req.object_id}"
               body.close
             end
 

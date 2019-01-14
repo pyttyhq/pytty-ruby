@@ -1,3 +1,5 @@
+require "io/console"
+
 module Pytty
   module Client
     module Api
@@ -8,16 +10,18 @@ module Pytty
             headers = [['accept', 'application/json']]
             body = {}.to_json
 
-            $stdin.raw!
-            $stdin.echo = false
+            # stdin_body = {
+            #   c: '\f'
+            # }.to_json
+            # response = internet.post("#{Pytty::Client.host_url}/v1/stdin/#{id}", headers, [stdin_body])
+
+            if interactive
+              $stdin.raw!
+              $stdin.echo = false
+            end
             async_stdin = Async::IO::Stream.new(
               Async::IO::Generic.new($stdin)
             )
-
-            stdin_body = {
-              c: "\f"
-            }.to_json
-            response = internet.post("#{Pytty::Client.host_url}/v1/stdin/#{id}", headers, [stdin_body])
 
             detach_sequence_started = false
             while c = async_stdin.read(1) do

@@ -13,10 +13,8 @@ module Pytty
 
         subcommand ["version"], "Show version information", Pytty::Common::Cli::VersionCommand
         subcommand ["run"], "run", RunCommand
-        subcommand ["stream"], "stream", StreamCommand
         subcommand ["yield"], "yield", YieldCommand
         subcommand ["ps"], "ps", PsCommand
-        subcommand ["kill"], "kill", KillCommand
         subcommand ["rm"], "rm", RmCommand
         subcommand ["spawn"], "spawn", SpawnCommand
         subcommand ["signal"], "signal", SignalCommand

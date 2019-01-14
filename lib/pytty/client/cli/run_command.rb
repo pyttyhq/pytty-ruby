@@ -16,8 +16,12 @@ module Pytty
 
         def execute
           Async.run do |task|
-            json = Pytty::Client::Api::Yield.run id: name, cmd: cmd_list, env: {}
-            process_yield = Pytty::Client::ProcessYield.from_json json
+            response, body = Pytty::Client::Api::Yield.run id: name, cmd: cmd_list, env: {}
+            unless response.status == 200
+              puts body
+              exit 1
+            end
+            process_yield = Pytty::Client::ProcessYield.from_json body
             unless detach?
               task.async do
                 process_yield.attach interactive: interactive?

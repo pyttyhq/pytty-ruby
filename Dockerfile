@@ -7,7 +7,7 @@ COPY build/linux-debian-deps.sh build/
 RUN build/linux-debian-deps.sh
 
 COPY . .
-RUN build/linux.sh
+RUN build/linux.sh 0.4.1
 
 FROM ubuntu:18.04
 

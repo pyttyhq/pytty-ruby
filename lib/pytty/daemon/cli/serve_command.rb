@@ -25,9 +25,25 @@ module Pytty
             "1234"
           end
 
-          Async::Reactor.run do
+          Async::Reactor.run do |task|
             Pytty::Daemon.load
-            Pytty::Daemon::Api::Server.run url: url_parts.join("")
+            server_task = task.async do
+              Pytty::Daemon::Api::Server.run url: url_parts.join("")
+            end
+
+            shutdown = lambda do |signo|
+              puts "\r"
+              puts "Got: #{Signal.signame(signo)}"
+              server_task.stop
+              Pytty::Daemon.yields.each do |id,process_yield|
+                process_yield.signal "kill"
+                puts id
+              end
+              puts "bye."
+            end
+
+            Signal.trap "INT", shutdown
+            Signal.trap "TERM", shutdown
           end
         end
       end

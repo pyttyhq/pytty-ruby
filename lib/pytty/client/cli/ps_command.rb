@@ -16,7 +16,7 @@ module Pytty
           end.wait
 
           unless quiet?
-            puts "id\trunning\tcmd"
+            puts "id\trunning\tstatus\tcmd"
             puts "-"*40
           end
           for process_yield_json in process_yield_jsons do

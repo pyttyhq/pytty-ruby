@@ -44,6 +44,7 @@ module Pytty
 
       def spawn
         return false if running?
+        @status = nil
 
         executable, args = @cmd
         # @env.merge!({
@@ -59,8 +60,6 @@ module Pytty
           File.open stdout_path, "r"
         )
         Async::Task.current.async do |task|
-          p ["spawn", executable, args, @env]
-
           real_stdout, real_stdin, pid = PTY.spawn @env, executable, *args
           @pid = pid
           async_stdout = Async::IO::Generic.new real_stdout
@@ -70,6 +69,7 @@ module Pytty
             while c = @stdin.dequeue do
               async_stdin.write c
             end
+          rescue Async::Stop => ex
           rescue Exception => ex
             puts "async_stdin.write: #{ex.inspect}"
           end
@@ -78,40 +78,48 @@ module Pytty
             while c = async_stdout.read(1)
               stdout_appender.write c
               stdout_appender.flush
+
               @stdouts.each do |notification, stdout|
                 begin
                   stdout.write c
-                rescue Errno::EPIPE => ex
+                rescue Errno::EPIPE, Errno::EPROTOTYPE => ex
                   notification.signal
                   @stdouts.delete notification
                 end
               end
             end
+          rescue Async::Stop
+            signal "kill"
+          rescue Exception => ex
+            p ["async_stdout.read", ex]
           ensure
             task_stdin_writer.stop
             Process.wait(@pid)
-            @status = $?.exitstatus
+            @status = if $?.exitstatus
+              $?.exitstatus
+            else
+              Signal.signame $?.termsig
+            end
+            puts "exited #{@id} with status: #{@status}"
+
             @pid = nil
             stdout_appender.close
 
             @stdouts.each do |notification, stdout|
-              p ["notifying: #{notification}"]
               notification.signal
               @stdouts.delete notification
             end
-            p ["exited", @cmd, "status", @status]
+            Pytty::Daemon.dump
           end
         end.wait
 
-        puts "spawned"
-        p ["@stdouts", @stdouts]
+        puts "spawned #{id}"
         return true
       end
 
       def signal(sig)
-        sig_upcased = sig.upcase
-        p ["signaling", sig_upcased, "to", @pid]
-        Process.kill(sig_upcased, @pid)
+        return unless @pid
+        Process.kill(sig.upcase, @pid)
       end
     end
   end

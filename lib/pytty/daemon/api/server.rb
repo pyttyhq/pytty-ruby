@@ -18,8 +18,8 @@ module Pytty
           bound_endpoint = Async::IO::SharedEndpoint.bound(endpoint)
 
           server = Falcon::Server.new(app, bound_endpoint, endpoint.protocol, endpoint.scheme)
-          puts "serving at #{url}"
           server.run
+          puts "serving at #{url}"
         end
       end
     end

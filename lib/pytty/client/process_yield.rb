@@ -1,11 +1,12 @@
 module Pytty
   module Client
     class ProcessYield
-      def initialize(id:, cmd:, env:, pid:)
+      def initialize(id:, cmd:, env:, pid:, status:)
         @cmd = cmd
         @env = env
         @pid = pid
         @id = id
+        @status = status
       end
 
       attr_reader :id
@@ -15,7 +16,8 @@ module Pytty
           id: json.fetch("id"),
           cmd: json.fetch("cmd"),
           env: json.fetch("env"),
-          pid: json.fetch("pid")
+          pid: json.fetch("pid"),
+          status: json.fetch("status")
         })
       end
       def running?
@@ -25,6 +27,7 @@ module Pytty
         fields = []
         fields << @id
         fields << running?
+        fields << @status
         fields << @cmd.join(" ")
         fields.join("\t")
       end

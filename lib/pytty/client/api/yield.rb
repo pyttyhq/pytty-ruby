@@ -18,7 +18,7 @@ module Pytty
           }.to_json
 
           response = internet.post("#{Pytty::Client.host_url}/v1/yield", headers, [body])
-          JSON.parse(response.body.read)
+          [response, JSON.parse(response.body.read)]
         end
       end
     end

@@ -12,12 +12,17 @@ module Pytty
         option ["--name"], "NAME", "name"
 
         def execute
-          process_yield = Async.run do
-            json = Pytty::Client::Api::Yield.run cmd: cmd_list, id: name, env: {}
-            ::Pytty::Client::ProcessYield.from_json json
+          response, json = Async.run do
+            Pytty::Client::Api::Yield.run cmd: cmd_list, id: name, env: {}
           end.wait
 
-          puts process_yield.id
+          if response.status == 200
+            process_yield = ::Pytty::Client::ProcessYield.from_json json
+            puts process_yield.id
+          else
+            puts json
+          end
+
         end
       end
     end

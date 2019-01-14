@@ -17,11 +17,14 @@ module Pytty
             env = params.dig "env"
             id = params.dig "id"
 
-            process_yield = Pytty::Daemon::ProcessYield.new cmd, id: id, env: env
-            Pytty::Daemon.yields[process_yield.id] = process_yield
-            Pytty::Daemon.dump
-
-            [200, process_yield]
+            if Pytty::Daemon.yields[id]
+              [500, "already exists"]
+            else
+              process_yield = Pytty::Daemon::ProcessYield.new cmd, id: id, env: env
+              Pytty::Daemon.yields[process_yield.id] = process_yield
+              Pytty::Daemon.dump
+              [200, process_yield]
+            end
           else
             raise "unknown: #{component}"
           end
