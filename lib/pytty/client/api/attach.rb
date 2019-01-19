@@ -15,10 +15,9 @@ module Pytty
             # }.to_json
             # response = internet.post("#{Pytty::Client.host_url}/v1/stdin/#{id}", headers, [stdin_body])
 
-            if interactive
-              $stdin.raw!
-              $stdin.echo = false
-            end
+            $stdin.raw!
+            $stdin.echo = false
+
             async_stdin = Async::IO::Stream.new(
               Async::IO::Generic.new($stdin)
             )
@@ -60,14 +59,20 @@ module Pytty
 
             response = internet.post("#{Pytty::Client.host_url}/v1/attach/#{id}", headers, [body])
             response.body.each do |c|
-              print c
+              case c
+              when "\n"
+                print "#{c}\r"
+              else
+                print c
+              end
             end
           rescue Async::Wrapper::Cancelled => ex
             p ["rescued", ex]
           ensure
             stdin_task.stop
-
             internet.close
+            `stty sane`
+            #$stdout.print "\r" #stdin.raw!
           end
         end
       end

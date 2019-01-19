@@ -1,14 +1,14 @@
 module Pytty
   module Client
     module Api
-      class Stdout
+      class Stderr
         def self.run(id:)
           internet = Async::HTTP::Internet.new
           headers = [['accept', 'application/json']]
           body = {
           }.to_json
 
-          response = internet.post("#{Pytty::Client.host_url}/v1/stdout/#{id}", headers, [body])
+          response = internet.post("#{Pytty::Client.host_url}/v1/stderr/#{id}", headers, [body])
           [response, response.body]
         ensure
           internet.close

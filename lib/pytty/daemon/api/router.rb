@@ -15,20 +15,29 @@ module Pytty
           end
 
           resp = case params["component"]
-          when "stdout"
+          when "stdout","stderr"
             process_yield = Pytty::Daemon.yields[params["id"]]
             return [404, {'content-type' => 'text/html; charset=utf-8'}, ["does not exist"]] unless process_yield
 
-            body = Async::HTTP::Body::Writable.new
+            stream_path = if params["component"] == "stdout"
+              process_yield.stdout_path
+            else
+              process_yield.stderr_path
+            end
 
+            stream = Async::IO::Stream.new(
+              File.open stream_path, "r"
+            )
+
+            body = Async::HTTP::Body::Writable.new
             begin
-              our_stdout = process_yield.stdout.dup
-              while c = our_stdout.read
+              while c = stream.read
                 body.write c
               end
             rescue Exception => ex
-              p ex
+              p "read", ex
             ensure
+              stream.close if stream
               body.close
             end
 
@@ -37,17 +46,15 @@ module Pytty
             process_yield = Pytty::Daemon.yields[params["id"]]
             return [404, {'content-type' => 'text/html; charset=utf-8'}, ["does not exist"]] unless process_yield
 
-            puts "got attach: #{req.object_id}"
             body = Async::HTTP::Body::Writable.new
 
             Async::Task.current.async do |task|
               notification = process_yield.add_stdout body
               notification.wait
             rescue Exception => ex
-              puts "----"
-              p ["attach", ex]
+              p ["attach exception:", ex]
             ensure
-              puts "closing attach: #{req.object_id}"
+              p ["closing attach:", req.object_id]
               body.close
             end
 
@@ -55,7 +62,7 @@ module Pytty
           when "ps","yield"
             status, output = Pytty::Daemon::Components::Handler.handle component: params["component"], params: body
             [status, {"Content-Type" => "application/json"}, [output.to_json]]
-          when "spawn","rm","signal","stdin"
+          when "spawn","rm","signal","stdin","status"
             status, output = Pytty::Daemon::Components::YieldHandler.handle component: params["component"], id: params["id"], params: body
             [status, {"Content-Type" => "application/json"}, [output.to_json]]
           when "ws"

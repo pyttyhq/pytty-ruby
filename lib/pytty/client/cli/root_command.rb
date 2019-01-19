@@ -20,6 +20,8 @@ module Pytty
         subcommand ["signal"], "signal", SignalCommand
         subcommand ["attach"], "attach", AttachCommand
         subcommand ["stdout"], "stdout", StdoutCommand
+        subcommand ["stderr"], "stderr", StderrCommand
+        subcommand ["status"], "status", StatusCommand
 
         def self.run
           super

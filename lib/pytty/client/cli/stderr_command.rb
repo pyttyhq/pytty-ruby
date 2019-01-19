@@ -7,12 +7,12 @@ require 'json'
 module Pytty
   module Client
     module Cli
-      class StdoutCommand < Clamp::Command
+      class StderrCommand < Clamp::Command
         parameter "ID", "id"
 
         def execute
           Async.run do
-            response, body = Pytty::Client::Api::Stdout.run id: id
+            response, body = Pytty::Client::Api::Stderr.run id: id
             if response.status == 200
               puts body.read
             else
