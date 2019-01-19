@@ -7,11 +7,12 @@ COPY build/linux-debian-deps.sh build/
 RUN build/linux-debian-deps.sh
 
 COPY . .
-RUN build/linux.sh 0.4.1
+RUN build/linux.sh latest
 
+# -----------------------
 FROM ubuntu:18.04
 
-COPY --from=builder /build/tmp/pyttyd-linux-amd64-0.4.1 /usr/local/bin/pyttyd
+COPY --from=builder /build/tmp/pyttyd-linux-amd64-latest /usr/local/bin/pyttyd
 
 ENV PYTTY_BIND=0.0.0.0
 ENV PYTTY_PORT=1234
