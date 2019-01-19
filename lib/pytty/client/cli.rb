@@ -13,6 +13,7 @@ require_relative "cli/attach_command"
 require_relative "cli/stdout_command"
 require_relative "cli/stderr_command"
 require_relative "cli/status_command"
+require_relative "cli/port_command"
 
 require_relative "cli/run_command"
 

@@ -7,3 +7,5 @@ require_relative "api/stderr"
 require_relative "api/status"
 
 require_relative "api/signal"
+require_relative "api/rm"
+require_relative "api/port"

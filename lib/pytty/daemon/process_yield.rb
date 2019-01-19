@@ -199,4 +199,3 @@ module Pytty
     end
   end
 end
-

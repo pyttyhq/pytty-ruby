@@ -62,7 +62,7 @@ module Pytty
           when "ps","yield"
             status, output = Pytty::Daemon::Components::Handler.handle component: params["component"], params: body
             [status, {"Content-Type" => "application/json"}, [output.to_json]]
-          when "spawn","rm","signal","stdin","status"
+          when "spawn","rm","signal","stdin","status","port"
             status, output = Pytty::Daemon::Components::YieldHandler.handle component: params["component"], id: params["id"], params: body
             [status, {"Content-Type" => "application/json"}, [output.to_json]]
           when "ws"

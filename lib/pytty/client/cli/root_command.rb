@@ -22,6 +22,7 @@ module Pytty
         subcommand ["stdout"], "stdout", StdoutCommand
         subcommand ["stderr"], "stderr", StderrCommand
         subcommand ["status"], "status", StatusCommand
+        subcommand ["port"], "port", PortCommand
 
         def self.run
           super
@@ -33,4 +34,3 @@ module Pytty
     end
   end
 end
-

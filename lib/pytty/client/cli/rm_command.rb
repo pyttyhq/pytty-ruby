@@ -24,12 +24,9 @@ module Pytty
           end
 
           Async.run do
-            internet = Async::HTTP::Internet.new
-            headers = [['accept', 'application/json']]
-            body = {}.to_json
-
             for id in ids do
-              response = internet.post("#{Pytty::Client.host_url}/v1/rm/#{id}", headers, [body])
+              response, body = Pytty::Client::Api::Rm.run id: id
+
               if response.status == 200
                 puts id
               else
@@ -37,8 +34,6 @@ module Pytty
                 exit 1
               end
             end
-          ensure
-            internet.close
           end
         end
       end

@@ -20,9 +20,11 @@ module Pytty
           status: json.fetch("status")
         })
       end
+
       def running?
         !@pid.nil?
       end
+
       def to_s
         fields = []
         fields << @id
@@ -32,11 +34,16 @@ module Pytty
         fields.join("\t")
       end
 
+      def rm
+        Pytty::Client::Api::Rm.run id: @id
+      end
+
       def spawn(tty:, interactive:)
         Pytty::Client::Api::Spawn.run id: @id, tty: tty, interactive: interactive
       end
 
       def attach(interactive:)
+        p @id
         Pytty::Client::Api::Attach.run id: @id, interactive: interactive
       end
     end

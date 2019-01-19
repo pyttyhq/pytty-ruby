@@ -14,6 +14,7 @@ module Pytty
 
         option ["-d","--detach"], :flag, "detach"
         option ["--name"], "name", "name"
+        option ["--rm"], :flag, "rm"
 
         def execute
           Async.run do |task|
@@ -27,6 +28,7 @@ module Pytty
             attach_task = unless detach?
               task.async do
                 process_yield.attach interactive: interactive?
+                process_yield.rm
               end
             end
 

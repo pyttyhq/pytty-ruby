@@ -9,6 +9,40 @@ module Pytty
           return [404, "not found"] unless process_yield
 
           return case component
+          when "port"
+            endpoint = Async::IO::Endpoint.tcp('0.0.0.0', params["from"].to_i)
+            endpoint.accept do |client|
+              process_yield.spawn unless process_yield.running?
+              p ["port accept", client.object_id]
+              upstream = Async::IO::Endpoint.tcp('0.0.0.0', params["to"].to_i)
+              peer = nil
+              upstream.connect do |peer|
+                Async::Task.current.async do |task|
+                  while rata = peer.read(1)
+                    client.write rata
+                  end
+                  client.close
+                end
+
+                while data = client.read(2)
+                  p data
+                  peer.write(data)
+                end
+              end
+            rescue Errno::ECONNREFUSED
+              sleep 0.1
+              p ["port upstream retry"]
+              retry
+            # rescue Async::Wrapper::Cancelled
+            #   # ???
+            rescue Exception => ex
+              p ["accex", ex]
+            ensure
+              peer.close
+              client.close
+            end
+
+            [200, "ok"]
           when "stdin"
             process_yield.stdin.enqueue params["c"]
 
@@ -48,4 +82,3 @@ module Pytty
     end
   end
 end
-
