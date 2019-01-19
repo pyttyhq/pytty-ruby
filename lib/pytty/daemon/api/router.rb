@@ -48,11 +48,21 @@ module Pytty
 
             body = Async::HTTP::Body::Writable.new
 
-            Async::Task.current.async do |task|
+            stderr_done = Async::Task.current.async do |task|
+              notification = process_yield.add_stderr body
+              notification.wait
+            end
+
+            stdout_done = Async::Task.current.async do |task|
               notification = process_yield.add_stdout body
               notification.wait
-            rescue Exception => ex
-              p ["attach exception:", ex]
+            end
+
+            Async::Task.current.async do |task|
+              stderr_done.wait
+              p ["stderr done"]
+              stdout_done.wait
+              p ["stderr done"]
             ensure
               p ["closing attach:", req.object_id]
               body.close

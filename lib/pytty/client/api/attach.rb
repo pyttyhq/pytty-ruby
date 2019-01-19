@@ -59,11 +59,17 @@ module Pytty
 
             response = internet.post("#{Pytty::Client.host_url}/v1/attach/#{id}", headers, [body])
             response.body.each do |c|
-              case c
-              when "\n"
-                print "#{c}\r"
+              stream = if c[0] == "1"
+                $stdout
               else
-                print c
+                $stderr
+              end
+
+              case c[1..-1]
+              when "\n"
+                stream.print "#{c}\r"
+              else
+                stream.print c[1..-1]
               end
             end
           rescue Async::Wrapper::Cancelled => ex

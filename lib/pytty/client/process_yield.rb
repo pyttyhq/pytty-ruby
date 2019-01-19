@@ -43,7 +43,6 @@ module Pytty
       end
 
       def attach(interactive:)
-        p @id
         Pytty::Client::Api::Attach.run id: @id, interactive: interactive
       end
     end

@@ -32,6 +32,11 @@ module Pytty
         @stdouts[notification] = stdout
         notification
       end
+      def add_stderr(stderr)
+        notification = Async::Notification.new
+        @stderrs[notification] = stderr
+        notification
+      end
 
       def running?
         # test by killing?
@@ -73,20 +78,23 @@ module Pytty
         # })
 
         Async::Task.current.async do |task|
-          real_stdout, real_stdin, @pid, real_stderr = begin
+          real_stdout, real_stdin, real_stderr, @pid, wait_thr  = begin
             if tty
               stderr_reader, stderr_writer = IO.pipe
-              p_stdout, p_stdin, pid = PTY.spawn @env, executable, *args, err: stderr_writer.fileno
-#              stderr_reader.close
+              p ["spawn", "PTY"]
+              #TODO: if bash is started, no prompt is written in stderr or stdout
+              p_stdout, p_stdin, pid = PTY.spawn @env, executable, *args, err: stderr_writer
 
-              [p_stdout, p_stdin, pid, stderr_reader]
+              [p_stdout, p_stdin, stderr_reader, pid]
             else
               p_stdin, p_stdout, p_stderr, p_wait_thr = Open3.popen3 @env, executable, *args, {}
-              [p_stdout, p_stdin, p_wait_thr.pid, p_stderr]
+              [p_stdout, p_stdin, p_stderr, p_wait_thr.pid, p_wait_thr]
             end
           rescue Errno::ENOENT => ex
             raise unless ex.message == "No such file or directory - #{executable}"
           end
+
+          next unless @pid  #command failed to spawn
 
           async_stdout = Async::IO::Generic.new real_stdout
           async_stdin = Async::IO::Generic.new real_stdin
@@ -118,16 +126,19 @@ module Pytty
 
               @stderrs.each do |notification, stderr|
                 begin
-                  stderr.write c
+                  stderr.write "2#{c}"
+                rescue Async::HTTP::Body::Writable::Closed
+                  puts "signaling error"
+                  notification.signal
+                  @stderrs.delete notification
                 rescue => ex
-                  puts "TODO"
                   raise ex
                 end
               end
             end
             p ["task_stderr_writer", "async_stderr has no more read"]
           rescue Exception => ex
-            p "async_stderr:", ex
+            p ["async_stderr ex:", ex]
           ensure
             stderr_appender.flush
             stderr_appender.close
@@ -145,7 +156,7 @@ module Pytty
 
               @stdouts.each do |notification, stdout|
                 begin
-                  stdout.write c
+                  stdout.write "1#{c}"
                 rescue Errno::EPIPE, Errno::EPROTOTYPE => ex
                   notification.signal
                   @stdouts.delete notification
@@ -158,18 +169,25 @@ module Pytty
           rescue Exception => ex
             p ["async_stdout", ex]
           ensure
-            begin
-              Process.wait(@pid)
-            rescue Errno::ECHILD => ex
-              raise ex unless ex.message == "No child processes"
-              puts "No child process"
+            process_status = if wait_thr
+              wait_thr.value
+            else
+              begin
+                Process.wait(@pid)
+                $?
+              rescue Errno::ECHILD => ex
+                raise ex unless ex.message == "No child processes"
+                puts "NO CHILD PROCESS"
+                nil
+              end
             end
 
-            @status = if $?.exitstatus
-              $?.exitstatus
+            @status = if process_status && process_status.exitstatus
+              process_status.exitstatus
             else
-              Signal.signame $?.termsig
+              Signal.signame process_status.termsig
             end
+
             puts "exited #{@id} with status: #{@status}"
             @pid = nil
             task_stdin_writer.stop if task_stdin_writer
@@ -178,14 +196,20 @@ module Pytty
               notification.signal
               @stdouts.delete notification
             end
+            @stderrs.each do |notification, stderr|
+              notification.signal
+              @stdouts.delete notification
+            end
             Pytty::Daemon.dump
           end
         end
 
         if @pid
-          puts "spawned #{id}"
+          p ["spawned", id]
           return true
         else
+          p ["failed to spawn"]
+          @status = 127
           return false
         end
       end
@@ -194,7 +218,7 @@ module Pytty
         return unless @pid
         Process.kill(sig.upcase, @pid)
       rescue Errno::ESRCH => ex
-          raise ex unless ex.message == "No such process"
+        raise ex unless ex.message == "No such process"
       end
     end
   end
