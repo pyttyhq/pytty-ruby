@@ -4,8 +4,8 @@ services:
   ubuntu:
     build: .
     image: pyttyhq/ubuntu:18.04
-    # volumes:
-    #   - build:/tmp/pytty-build
+    volumes:
+      - build:/tmp/pytty-build
 
 volumes:
   build:
