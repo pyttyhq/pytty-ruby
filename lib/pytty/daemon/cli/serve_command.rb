@@ -9,17 +9,17 @@ module Pytty
           puts "🚽 pyttyd #{Pytty::VERSION}"
 
           url_parts = ["http://"]
-          url_parts << if ENV["PYTTY_BIND"]
-            ENV["PYTTY_BIND"]
+          url_parts << if ENV["PYTTYD_BIND"]
+            ENV["PYTTYD_BIND"]
           else
             "127.0.0.1"
           end
           url_parts << ":"
-          url_parts << if ENV["PYTTY_PORT"]
-            if ENV["PYTTY_PORT"] == "PORT"
+          url_parts << if ENV["PYTTYD_PORT"]
+            if ENV["PYTTYD_PORT"] == "PORT"
               ENV.fetch "PORT"
             else
-              ENV["PYTTY_PORT"]
+              ENV["PYTTYD_PORT"]
             end
           else
             "1234"
@@ -50,4 +50,3 @@ module Pytty
     end
   end
 end
-

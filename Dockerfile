@@ -12,8 +12,8 @@ RUN build/linux.sh latest
 # -----------------------
 FROM ubuntu:18.04
 
-COPY --from=builder /build/tmp/pyttyd-linux-amd64-latest /usr/local/bin/pyttyd
+COPY --from=builder /build/pyttyd-linux-amd64-latest /usr/local/bin/pyttyd
 
-ENV PYTTY_BIND=0.0.0.0
-ENV PYTTY_PORT=1234
+ENV PYTTYD_BIND=0.0.0.0
+ENV PYTTYD_PORT=1234
 ENTRYPOINT [ "/usr/local/bin/pyttyd" ]
