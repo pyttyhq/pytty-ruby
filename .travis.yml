@@ -12,5 +12,4 @@ before_install:
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
 script:
-  - build/linux-debian-deps.sh
-  - build/linux.sh 0.5.0
+  - docker-compose build
