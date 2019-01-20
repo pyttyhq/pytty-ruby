@@ -19,6 +19,7 @@ Gem::Specification.new do |spec|
     `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
   end
   ignored_files = ["Dockerfile", "docker-compose.yml",
+    ".gcloudignore",
     ".dockerignore",".gitignore",
     ".ruby-gemset",".ruby-version",
     ".rspec",
